@@ -46,6 +46,7 @@ func (client *SOAPClient) PerformActionCtx(ctx context.Context, actionNamespace,
 		Header: http.Header{
 			"SOAPACTION":   []string{`"` + actionNamespace + "#" + actionName + `"`},
 			"CONTENT-TYPE": []string{"text/xml; charset=\"utf-8\""},
+			"Connection":   []string{"close"},
 		},
 		Body: ioutil.NopCloser(bytes.NewBuffer(requestBytes)),
 		// Set ContentLength to avoid chunked encoding - some servers might not support it.
