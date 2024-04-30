@@ -31,7 +31,7 @@ func NewSOAPClient(endpointURL url.URL) *SOAPClient {
 	}
 }
 
-// PerformSOAPAction makes a SOAP request, with the given action.
+// PerformActionCtx makes a SOAP request, with the given action.
 // inAction and outAction must both be pointers to structs with string fields
 // only.
 func (client *SOAPClient) PerformActionCtx(ctx context.Context, actionNamespace, actionName string, inAction interface{}, outAction interface{}) error {
@@ -40,12 +40,17 @@ func (client *SOAPClient) PerformActionCtx(ctx context.Context, actionNamespace,
 		return err
 	}
 
+	// Samsung TV hack. Copy from: https://github.com/alexballas/go2tv/blob/main/soapcalls/soapbuilders.go#L466
+	requestBytes = bytes.ReplaceAll(requestBytes, []byte("&#34;"), []byte(`"`))
+	requestBytes = bytes.ReplaceAll(requestBytes, []byte("&amp;"), []byte("&"))
+
 	req := &http.Request{
 		Method: "POST",
 		URL:    &client.EndpointURL,
 		Header: http.Header{
 			"SOAPACTION":   []string{`"` + actionNamespace + "#" + actionName + `"`},
 			"CONTENT-TYPE": []string{"text/xml; charset=\"utf-8\""},
+			"Connection":   []string{"close"}, // copy from: https://github.com/alexballas/go2tv/blob/main/soapcalls/soapcallers.go#L198
 		},
 		Body: ioutil.NopCloser(bytes.NewBuffer(requestBytes)),
 		// Set ContentLength to avoid chunked encoding - some servers might not support it.
